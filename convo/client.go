@@ -29,9 +29,10 @@ type threadRes struct {
 
 type Client struct {
 	ThreadID string
+	Security map[string]string
 }
 
-func NewThread() *Client {
+func NewThread() string {
 	res, err := http.Post(fmt.Sprintf("%s/thread", ServerAddress), ContentTypeJson, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -57,12 +58,13 @@ func NewThread() *Client {
 	if resJson.ID == "" {
 		log.Fatalf("Invalid return json thread %s", body)
 	}
-	return NewClient(resJson.ID)
+	return resJson.ID
 }
 
-func NewClient(threadID string) *Client {
+func NewClient(threadID string, security map[string]string) *Client {
 	return &Client{
 		ThreadID: threadID,
+		Security: security,
 	}
 }
 

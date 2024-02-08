@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/libmojito/mingle/convo"
@@ -13,8 +14,24 @@ import (
 const (
 	FlagThread      = "thread"
 	FlagContent     = "content"
+	FlagSecurity    = "security"
 	FlagInteractive = "interactive"
 )
+
+func parseSecurity(security []string) map[string]string {
+	tokens := make(map[string]string)
+	for _, s := range security {
+		ts := strings.Split(s, "=")
+		if len(ts) == 1 {
+			tokens["__default__"] = s
+		} else {
+			k := ts[0]
+			v := strings.Join(ts[1:], "=")
+			tokens[k] = v
+		}
+	}
+	return tokens
+}
 
 func NewChatCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -31,12 +48,20 @@ func NewChatCmd() *cobra.Command {
 			if err != nil {
 				log.Fatal(err)
 			}
+			security, err := cmd.Flags().GetStringArray(FlagSecurity)
+			if err != nil {
+				log.Fatal(err)
+			}
+			tokens := parseSecurity(security)
+			fmt.Println(tokens)
+			os.Exit(0)
+
 			interactive, err := cmd.Flags().GetBool(FlagInteractive)
 			if err != nil {
 				log.Fatal(err)
 			}
 
-			clt := convo.NewClient(threadID)
+			clt := convo.NewClient(threadID, tokens)
 
 			if interactive {
 				if len(os.Getenv("DEBUG")) > 0 {
@@ -76,8 +101,8 @@ func NewChatCmd() *cobra.Command {
 	}
 
 	cmd.Flags().Bool(FlagInteractive, false, "interactive session")
-
 	cmd.Flags().String(FlagContent, "", "the message content")
+	cmd.Flags().StringArray(FlagSecurity, []string{}, "the bearer tokens to be added for different ")
 
 	return cmd
 }
