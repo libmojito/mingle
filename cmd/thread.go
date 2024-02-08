@@ -11,7 +11,7 @@ func NewThreadCmd() *cobra.Command {
 		Short: "Create a new thread",
 		Long:  `Create a new thread`,
 		Run: func(cmd *cobra.Command, args []string) {
-			cmd.Printf("%s\n", convo.NewThread().ThreadID)
+			cmd.Printf("%s\n", convo.NewThread())
 		},
 	}
 
