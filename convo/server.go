@@ -32,7 +32,7 @@ func (svr *Server) Run() {
 
 	r.POST("/thread", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"thread_id": "thread_1234567890",
+			"id": "thread_1234567890",
 		})
 	})
 

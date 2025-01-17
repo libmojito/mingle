@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	ServerAddress   = "http://localhost:8080"
-	ContentTypeJson = "application/json"
+	DefaultServerAddress = "http://localhost:8080"
+	ContentTypeJson      = "application/json"
 )
 
 type chatReq struct {
@@ -28,13 +28,36 @@ type threadRes struct {
 	ID string `json:"id"`
 }
 
-type Client struct {
-	ThreadID string
-	Security map[string]string
+type ChatClient struct {
+	ThreadClient ThreadClient
+	ThreadID     string
+	Security     map[string]string
 }
 
-func NewThread() string {
-	res, err := http.Post(fmt.Sprintf("%s/thread", ServerAddress), ContentTypeJson, nil)
+type ThreadClient struct {
+	serverAddress string
+}
+
+func NewThreadClient(options ...func(*ThreadClient)) *ThreadClient {
+	c := &ThreadClient{
+		serverAddress: DefaultServerAddress,
+	}
+
+	for _, o := range options {
+		o(c)
+	}
+
+	return c
+}
+
+func WithServerAddress(addr string) func(*ThreadClient) {
+	return func(c *ThreadClient) {
+		c.serverAddress = addr
+	}
+}
+
+func (sc *ThreadClient) NewThread() string {
+	res, err := http.Post(fmt.Sprintf("%s/thread", sc.serverAddress), ContentTypeJson, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,14 +85,17 @@ func NewThread() string {
 	return resJson.ID
 }
 
-func NewClient(threadID string, security map[string]string) *Client {
-	return &Client{
+func NewChatClient(server string, threadID string, security map[string]string) *ChatClient {
+	return &ChatClient{
+		ThreadClient: *NewThreadClient(
+			WithServerAddress(server),
+		),
 		ThreadID: threadID,
 		Security: security,
 	}
 }
 
-func (s *Client) SendMessageContent(c string) Message {
+func (s *ChatClient) SendMessageContent(c string) Message {
 	req := chatReq{
 		ThreadID: s.ThreadID,
 		Content:  c,
@@ -81,7 +107,7 @@ func (s *Client) SendMessageContent(c string) Message {
 	}
 
 	res, err := http.Post(
-		fmt.Sprintf("%s/chat", ServerAddress),
+		fmt.Sprintf("%s/chat", s.ThreadClient.serverAddress),
 		ContentTypeJson,
 		bytes.NewBuffer(reqJson),
 	)

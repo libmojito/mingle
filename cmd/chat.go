@@ -11,13 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	FlagThread      = "thread"
-	FlagContent     = "content"
-	FlagSecurity    = "security"
-	FlagInteractive = "interactive"
-)
-
 func parseSecurity(security []string) map[string]string {
 	tokens := make(map[string]string)
 	for _, s := range security {
@@ -40,6 +33,11 @@ func NewChatCmd() *cobra.Command {
 		Long:  `Talk about stuff`,
 		Run: func(cmd *cobra.Command, args []string) {
 
+			svrAddr, err := cmd.Flags().GetString(FlagServerAddress)
+			if err != nil {
+				log.Fatal(err)
+			}
+
 			threadID, err := cmd.Flags().GetString(FlagThread)
 			if err != nil {
 				log.Fatal(err)
@@ -59,7 +57,7 @@ func NewChatCmd() *cobra.Command {
 				log.Fatal(err)
 			}
 
-			clt := convo.NewClient(threadID, tokens)
+			clt := convo.NewChatClient(svrAddr, threadID, tokens)
 
 			if interactive {
 				if len(os.Getenv("DEBUG")) > 0 {
@@ -101,6 +99,7 @@ func NewChatCmd() *cobra.Command {
 	cmd.Flags().Bool(FlagInteractive, false, "interactive session")
 	cmd.Flags().String(FlagContent, "", "the message content")
 	cmd.Flags().StringArray(FlagSecurity, []string{}, "the bearer tokens to be added for different ")
+	cmd.Flags().String(FlagServerAddress, convo.DefaultServerAddress, "The server address")
 
 	return cmd
 }

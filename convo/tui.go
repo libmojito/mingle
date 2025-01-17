@@ -27,13 +27,13 @@ type model struct {
 	textareaRows   int
 	senderStyle    lipgloss.Style
 	responderStyle lipgloss.Style
-	client         *Client
+	chatClient     *ChatClient
 	spinner        spinner.Model
 	blur           bool
 	err            error
 }
 
-func InitialModel(clt *Client) model {
+func InitialModel(clt *ChatClient) model {
 	ta := textarea.New()
 	ta.Placeholder = "Ctrl-S or Shift-Right to send a message..."
 	ta.Focus()
@@ -68,7 +68,7 @@ Type a message and press Enter to send.`)
 		responderStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("12")),
 		spinner:        s,
 		blur:           false,
-		client:         clt,
+		chatClient:     clt,
 	}
 }
 
@@ -91,7 +91,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyCtrlC, tea.KeyEsc, tea.KeyCtrlD:
 			fmt.Println(m.textarea.Value())
 			return m, tea.Quit
-		case tea.KeyCtrlS, tea.KeyShiftRight:
+		case tea.KeyCtrlS, tea.KeyShiftRight, tea.KeyTab:
 			c := m.textarea.Value()
 			m.messages = append(m.messages, m.senderStyle.Render("You: ")+c)
 
@@ -164,7 +164,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) getResponse(chat string) tea.Cmd {
 	return func() tea.Msg {
-		return m.client.SendMessageContent(chat)
+		return m.chatClient.SendMessageContent(chat)
 	}
 }
 
